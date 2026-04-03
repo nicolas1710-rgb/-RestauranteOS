@@ -23,6 +23,8 @@ export const viewport = {
   userScalable: false,
 }
 
+import { PwaInstallPrompt } from '@/components/PwaInstallPrompt'
+
 export default function RootLayout({
   children,
 }: {
@@ -30,7 +32,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <PwaInstallPrompt />
+      </body>
     </html>
   )
 }
