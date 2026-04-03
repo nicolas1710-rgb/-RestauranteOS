@@ -1,5 +1,5 @@
 'use client'
-
+//a
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -64,7 +64,7 @@ export default function AdminMenuPage() {
 
     async function createItem(categoryId: string) {
         if (!itemForm.name.trim() || !itemForm.price) return
-        
+
         let imageUrl = null
 
         if (imageFile) {
