@@ -108,7 +108,7 @@ export default function OrderCart({ tableId }: Props) {
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 z-[100]">
+        <div className="fixed inset-0" style={{ zIndex: 9999 }}>
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/40"
@@ -223,10 +223,11 @@ export default function OrderCart({ tableId }: Props) {
             {/* Mejora C — Confirm bottom sheet */}
             {showConfirm && (
                 <div
-                    className="fixed inset-x-0 z-[60] bg-white rounded-t-2xl p-6 shadow-2xl animate-slide-in-bottom"
+                    className="fixed inset-x-0 bg-white rounded-t-2xl p-6 shadow-2xl animate-slide-in-bottom"
                     style={{
+                        zIndex: 10000,
                         bottom: 0,
-                        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)',
+                        paddingBottom: 'calc(env(safe-area-inset-bottom, 24px) + 24px)',
                     }}
                 >
                     <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />

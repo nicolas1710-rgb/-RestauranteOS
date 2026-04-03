@@ -18,7 +18,7 @@ export default function AdminMenuPage() {
     const [showItemForm, setShowItemForm] = useState<string | null>(null) // categoryId
     const [catName, setCatName] = useState('')
     const [catIcon, setCatIcon] = useState('🍽️')
-    const [itemForm, setItemForm] = useState({ name: '', description: '', price: '' })
+    const [itemForm, setItemForm] = useState({ name: '', description: '', price: '', image_url: '' })
     const [loading, setLoading] = useState(true)
 
     useEffect(() => { if (profile?.restaurant_id) loadData() }, [profile?.restaurant_id])
@@ -69,13 +69,14 @@ export default function AdminMenuPage() {
             name: itemForm.name.trim(),
             description: itemForm.description || null,
             price: parseFloat(itemForm.price),
+            image_url: itemForm.image_url || null,
             preparation_time: 0,
             available: true,
             display_order: items.filter(i => i.category_id === categoryId).length,
         })
         if (error) { toast.error(error.message); return }
         toast.success('Item creado')
-        setItemForm({ name: '', description: '', price: '' })
+        setItemForm({ name: '', description: '', price: '', image_url: '' })
         setShowItemForm(null)
         loadData()
     }
@@ -246,6 +247,19 @@ export default function AdminMenuPage() {
                                                         />
                                                     </div>
                                                     <p className="text-[9px] text-gray-400 ml-1">Solo números, sin signos de moneda</p>
+                                                </div>
+
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                                                        <span>URL de la Imagen</span>
+                                                        <span className="text-orange-500 text-xs">🖼️</span>
+                                                    </label>
+                                                    <input
+                                                        value={itemForm.image_url}
+                                                        onChange={e => setItemForm(f => ({ ...f, image_url: e.target.value }))}
+                                                        className="input text-sm h-11"
+                                                        placeholder="https://ejemplo.com/imagen.jpg (Opcional)"
+                                                    />
                                                 </div>
                                             </div>
 
