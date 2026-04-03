@@ -127,7 +127,11 @@ export default function AdminMenuPage() {
 
     async function deleteItem(id: string) {
         if (!confirm('¿Eliminar este item del menú?')) return
-        await supabase.from('menu_items').delete().eq('id', id)
+        const { error } = await supabase.from('menu_items').delete().eq('id', id)
+        if (error) {
+            toast.error('No se puede eliminar el producto porque tiene pedidos asociados. En su lugar, desactívalo.')
+            return
+        }
         toast.success('Item eliminado')
         loadData()
     }

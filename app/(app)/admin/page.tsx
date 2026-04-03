@@ -215,19 +215,19 @@ export default function AdminPage() {
                     <div className="card p-4 min-h-[250px]">
                         {stats.waiterStats.length > 0 ? (
                             <ResponsiveContainer width="100%" height={250}>
-                                <BarChart data={stats.waiterStats} margin={{ top: 0, right: 0, left: -20, bottom: 0 }} layout="vertical">
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
-                                    <XAxis type="number" hide />
-                                    <YAxis dataKey="name" type="category" tick={{fontSize: 12}} axisLine={false} tickLine={false} width={100} />
+                                <BarChart data={stats.waiterStats} margin={{ top: 20, right: 0, left: -20, bottom: 0 }} layout="horizontal">
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                                    <XAxis dataKey="name" type="category" tick={{fontSize: 12}} axisLine={false} tickLine={false} />
+                                    <YAxis type="number" tick={{fontSize: 12}} axisLine={false} tickLine={false} />
                                     <RechartsTooltip 
                                         cursor={{fill: 'transparent'}}
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                     />
-                                    <Bar dataKey="ordenes" name="Órdenes" fill="#3b82f6" radius={[0, 4, 4, 0]}>
+                                    <Bar dataKey="ordenes" name="Órdenes" fill="#3b82f6" radius={[4, 4, 0, 0]}>
                                         {stats.waiterStats.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
-                                        <LabelList dataKey="ordenes" position="right" style={{ fontSize: '12px', fill: '#6b7280', fontWeight: 'bold' }} formatter={(val: number) => `${val} ventas`} />
+                                        <LabelList dataKey="ordenes" position="top" style={{ fontSize: '12px', fill: '#6b7280', fontWeight: 'bold' }} formatter={(val: number) => `${val} ventas`} />
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
@@ -243,28 +243,30 @@ export default function AdminPage() {
                     <div className="card p-4 min-h-[250px] flex items-center justify-center">
                         {stats.topItems.length > 0 ? (
                             <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie
-                                        data={stats.topItems}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={40}
-                                        outerRadius={70}
-                                        paddingAngle={5}
-                                        dataKey="count"
-                                        nameKey="name"
-                                        label={({ name, value }: any) => `${name.substring(0,10)} (${value})`}
-                                        labelLine={true}
-                                    >
-                                        {stats.topItems.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
+                                <BarChart data={stats.topItems} margin={{ top: 0, right: 30, left: 10, bottom: 0 }} layout="vertical">
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
+                                    <XAxis type="number" hide />
+                                    <YAxis 
+                                        dataKey="name" 
+                                        type="category" 
+                                        tick={{fontSize: 11}} 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        width={110} 
+                                        interval={0} 
+                                        tickFormatter={(val) => val.length > 15 ? val.substring(0, 15) + '...' : val} 
+                                    />
                                     <RechartsTooltip 
+                                        cursor={{fill: 'transparent'}}
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                     />
-                                    <Legend wrapperStyle={{ fontSize: '11px' }} />
-                                </PieChart>
+                                    <Bar dataKey="count" name="Vendidos" fill="#10b981" radius={[0, 4, 4, 0]}>
+                                        {stats.topItems.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[(index + 4) % COLORS.length]} />
+                                        ))}
+                                        <LabelList dataKey="count" position="right" style={{ fontSize: '12px', fill: '#6b7280', fontWeight: 'bold' }} />
+                                    </Bar>
+                                </BarChart>
                             </ResponsiveContainer>
                         ) : (
                             <div className="h-full flex items-center justify-center text-gray-400 text-sm py-10">No hay datos hoy</div>

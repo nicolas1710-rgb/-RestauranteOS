@@ -18,8 +18,9 @@ export default function AdminStaffPage() {
     const supabase = createClient()
     const [staff, setStaff] = useState<Profile[]>([])
     const [showForm, setShowForm] = useState(false)
-    const [form, setForm] = useState({ full_name: '', role: 'waiter' })
+    const [form, setForm] = useState({ full_name: '', role: 'waiter', email: '', password: '' })
     const [loading, setLoading] = useState(true)
+    const [submitting, setSubmitting] = useState(false)
 
     useEffect(() => { if (profile?.restaurant_id) load() }, [profile?.restaurant_id])
 
@@ -32,6 +33,37 @@ export default function AdminStaffPage() {
             .order('full_name')
         setStaff(data ?? [])
         setLoading(false)
+    }
+
+    async function handleCreateStaff() {
+        if (!form.full_name || !form.email || !form.password) {
+            toast.error('Llena todos los campos')
+            return
+        }
+        setSubmitting(true)
+        try {
+            const res = await fetch('/api/staff', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...form,
+                    restaurant_id: profile!.restaurant_id
+                })
+            })
+            const data = await res.json()
+            if (!res.ok) {
+                toast.error(data.error || 'Error al crear usuario')
+            } else {
+                toast.success('Usuario creado correctamente')
+                setForm({ full_name: '', role: 'waiter', email: '', password: '' })
+                setShowForm(false)
+                load()
+            }
+        } catch (error) {
+            toast.error('Error de red al crear usuario')
+        } finally {
+            setSubmitting(false)
+        }
     }
 
     async function toggleActive(id: string, active: boolean) {
@@ -55,28 +87,41 @@ export default function AdminStaffPage() {
             </div>
 
             {showForm && (
-                <div className="card p-4 border-2 border-orange-200 space-y-3">
-                    <h3 className="font-semibold text-gray-800">Nuevo miembro del equipo</h3>
-                    <p className="text-xs text-orange-600 bg-orange-50 p-2 rounded-lg">
-                        ℹ️ El usuario debe registrarse en Supabase Auth con su email. Aquí configuras su nombre y rol.
-                    </p>
-                    <input
-                        value={form.full_name}
-                        onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
-                        className="input"
-                        placeholder="Nombre completo"
-                    />
-                    <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} className="input">
-                        <option value="waiter">🧑‍🍳 Mesero</option>
-                        <option value="kitchen">👨‍🍳 Cocina (KDS)</option>
-                        <option value="admin">⚙️ Gerente</option>
-                    </select>
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-yellow-800">
-                        <strong>Nota:</strong> Para crear usuarios necesitas que el usuario se registre vía Auth de Supabase.
-                        Luego actualiza su perfil con este formulario desde el SQL Editor o configura el webhook de registro.
+                <div className="card p-5 border-2 border-orange-200 space-y-4">
+                    <h3 className="font-semibold text-gray-800">Crea un Nuevo Miembro del Staff</h3>
+                    
+                    <div className="space-y-3">
+                        <input
+                            value={form.full_name}
+                            onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
+                            className="input"
+                            placeholder="Nombre Completo"
+                        />
+                        <input
+                            value={form.email}
+                            type="email"
+                            onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                            className="input"
+                            placeholder="Correo Electrónico (acceso)"
+                        />
+                        <input
+                            value={form.password}
+                            type="password"
+                            onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                            className="input"
+                            placeholder="Contraseña Temporal (min 6 caracteres)"
+                        />
+                        <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} className="input">
+                            <option value="waiter">🧑‍🍳 Mesero</option>
+                            <option value="kitchen">👨‍🍳 Cocina (KDS)</option>
+                            <option value="admin">⚙️ Gerente</option>
+                        </select>
                     </div>
-                    <div className="flex gap-2">
-                        <button onClick={() => setShowForm(false)} className="btn-secondary text-sm flex-1">Cerrar</button>
+                    <div className="flex gap-2 pt-2">
+                        <button onClick={handleCreateStaff} disabled={submitting} className="btn-primary flex-1 shadow-lg shadow-orange-200">
+                            {submitting ? 'Creando...' : 'Crear Usuario'}
+                        </button>
+                        <button onClick={() => setShowForm(false)} className="btn-secondary px-6">Cancelar</button>
                     </div>
                 </div>
             )}
