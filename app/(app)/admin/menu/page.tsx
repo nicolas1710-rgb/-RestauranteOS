@@ -241,8 +241,8 @@ export default function AdminMenuPage() {
                                                         <input
                                                             value={itemForm.price}
                                                             onChange={e => setItemForm(f => ({ ...f, price: e.target.value }))}
-                                                            type="number"
-                                                            className="input text-sm h-11 pl-16"
+                                                            type="text"
+                                                            className="input text-sm h-11 pl-12"
                                                             placeholder="0.00"
                                                         />
                                                     </div>
