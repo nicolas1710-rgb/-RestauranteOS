@@ -5,6 +5,12 @@ import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { formatCurrency } from '@/lib/utils'
 import { TrendingUp, Users, ShoppingBag, Clock, ChefHat, UtensilsCrossed } from 'lucide-react'
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+    BarChart, Bar, PieChart, Pie, Cell, Legend
+} from 'recharts'
+
+const COLORS = ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#f59e0b', '#06b6d4', '#6366f1']
 
 export default function AdminPage() {
     const { profile } = useAuth()
@@ -16,6 +22,8 @@ export default function AdminPage() {
         occupiedTables: 0,
         avgPrepTime: 0,
         topItems: [] as { name: string; count: number }[],
+        waiterStats: [] as { name: string; ordenes: number }[],
+        weeklySales: [] as { date: string; ventas: number }[]
     })
     const [loading, setLoading] = useState(true)
 
@@ -35,17 +43,41 @@ export default function AdminPage() {
         const today = new Date()
         today.setHours(0, 0, 0, 0)
 
-        const [salesRes, openRes, tablesRes, occupiedRes, itemsRes] = await Promise.all([
-            // Considera ventas los pedidos que ya fueron entregados o cerrados (pagados)
-            supabase.from('orders').select('total').eq('restaurant_id', profile!.restaurant_id).gte('created_at', today.toISOString()).in('status', ['delivered', 'closed']),
-            supabase.from('orders').select('id', { count: 'exact', head: true }).eq('restaurant_id', profile!.restaurant_id).in('status', ['sent', 'preparing', 'ready']),
+        const weekAgo = new Date()
+        weekAgo.setDate(weekAgo.getDate() - 6)
+        weekAgo.setHours(0, 0, 0, 0)
+
+        const [ordersRes, tablesRes, occupiedRes, itemsRes, weeklySalesRes] = await Promise.all([
+            // Hoy orders
+            supabase.from('orders').select('id, total, status, waiter:profiles(full_name)').eq('restaurant_id', profile!.restaurant_id).gte('created_at', today.toISOString()),
+            // Tables
             supabase.from('tables').select('id', { count: 'exact', head: true }).eq('restaurant_id', profile!.restaurant_id),
             supabase.from('tables').select('id', { count: 'exact', head: true }).eq('restaurant_id', profile!.restaurant_id).eq('status', 'occupied'),
-            // Para poder filtrar por columnas de la tabla foránea, se requiere !inner
-            supabase.from('order_items').select('menu_item:menu_items!inner(name, restaurant_id), quantity').eq('menu_items.restaurant_id', profile!.restaurant_id).gte('sent_to_kitchen_at', today.toISOString()).limit(100),
+            // Top items
+            supabase.from('order_items').select('menu_item:menu_items!inner(name, restaurant_id), quantity').eq('menu_items.restaurant_id', profile!.restaurant_id).gte('sent_to_kitchen_at', today.toISOString()).limit(500),
+            // Weekly sales
+            supabase.from('orders').select('created_at, total').eq('restaurant_id', profile!.restaurant_id).gte('created_at', weekAgo.toISOString()).in('status', ['delivered', 'closed'])
         ])
 
-        const todaySales = salesRes.data?.reduce((sum, o) => sum + (o.total ?? 0), 0) ?? 0
+        const orders = ordersRes.data || []
+        
+        // Calcular stats de hoy
+        const todaySales = orders
+            .filter(o => ['delivered', 'closed'].includes(o.status))
+            .reduce((sum, o) => sum + (o.total ?? 0), 0)
+            
+        const openOrders = orders
+            .filter(o => ['sent', 'preparing', 'ready'].includes(o.status)).length
+
+        // Calcular ordenes por mesero
+        const waiterMap: Record<string, number> = {}
+        orders.forEach((o: any) => {
+            const name = o.waiter?.full_name || 'Desconocido'
+            waiterMap[name] = (waiterMap[name] || 0) + 1
+        })
+        const waiterStats = Object.entries(waiterMap)
+            .map(([name, ordenes]) => ({ name, ordenes }))
+            .sort((a, b) => b.ordenes - a.ordenes)
 
         // Aggregate top items
         const itemMap: Record<string, number> = {}
@@ -58,13 +90,35 @@ export default function AdminPage() {
             .slice(0, 5)
             .map(([name, count]) => ({ name, count }))
 
+        // Aggregate weekly sales
+        const daysMap: Record<string, number> = {}
+        // Initialize last 7 days with 0
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date()
+            d.setDate(d.getDate() - i)
+            const dayStr = d.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit' })
+            daysMap[dayStr] = 0
+        }
+        
+        weeklySalesRes.data?.forEach((o: any) => {
+            if (!o.created_at) return
+            const d = new Date(o.created_at)
+            const dayStr = d.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit' })
+            if (daysMap[dayStr] !== undefined) {
+                daysMap[dayStr] += (o.total || 0)
+            }
+        })
+        const weeklySales = Object.entries(daysMap).map(([date, ventas]) => ({ date, ventas }))
+
         setStats({
             todaySales,
-            openOrders: openRes.count ?? 0,
+            openOrders,
             totalTables: tablesRes.count ?? 0,
             occupiedTables: occupiedRes.count ?? 0,
-            avgPrepTime: 15,
+            avgPrepTime: 15, // TODO: Compute from delivered orders
             topItems,
+            waiterStats,
+            weeklySales
         })
         setLoading(false)
     }
@@ -107,10 +161,10 @@ export default function AdminPage() {
     )
 
     return (
-        <div className="px-4 py-4 space-y-6">
+        <div className="px-4 py-4 space-y-6 pb-20">
             <div>
                 <h2 className="text-xl font-bold text-gray-900">Dashboard</h2>
-                <p className="text-sm text-gray-500">Resumen del día en tiempo real</p>
+                <p className="text-sm text-gray-500">Resumen del día en tiempo real y estadísticas completas</p>
             </div>
 
             {/* Metrics grid */}
@@ -126,25 +180,95 @@ export default function AdminPage() {
                 ))}
             </div>
 
-            {/* Top items */}
-            {stats.topItems.length > 0 && (
+            {/* Weekly Sales Chart */}
+            <div>
+                <p className="section-title">Ventas últimos 7 días</p>
+                <div className="card p-4 min-h-[300px]">
+                    <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={stats.weeklySales} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                            <XAxis dataKey="date" tick={{fontSize: 12}} tickMargin={10} axisLine={false} tickLine={false} />
+                            <YAxis tick={{fontSize: 12}} axisLine={false} tickLine={false} tickFormatter={(val) => `$${val/1000}k`} />
+                            <RechartsTooltip 
+                                formatter={(value: number) => formatCurrency(value)}
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                            />
+                            <Area type="monotone" dataKey="ventas" name="Ventas" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* Bottom charts grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Top Waiters */}
                 <div>
-                    <p className="section-title">Top items hoy</p>
-                    <div className="card divide-y divide-gray-100">
-                        {stats.topItems.map((item, idx) => (
-                            <div key={item.name} className="flex items-center justify-between px-4 py-3">
-                                <div className="flex items-center gap-3">
-                                    <span className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 text-xs font-bold flex items-center justify-center">
-                                        {idx + 1}
-                                    </span>
-                                    <span className="font-medium text-gray-800 text-sm">{item.name}</span>
-                                </div>
-                                <span className="badge badge-default">{item.count}x</span>
-                            </div>
-                        ))}
+                    <p className="section-title">Órdenes por mesero (Hoy)</p>
+                    <div className="card p-4 min-h-[250px]">
+                        {stats.waiterStats.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={250}>
+                                <BarChart data={stats.waiterStats} margin={{ top: 0, right: 0, left: -20, bottom: 0 }} layout="vertical">
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
+                                    <XAxis type="number" hide />
+                                    <YAxis dataKey="name" type="category" tick={{fontSize: 12}} axisLine={false} tickLine={false} width={100} />
+                                    <RechartsTooltip 
+                                        cursor={{fill: 'transparent'}}
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Bar dataKey="ordenes" name="Órdenes" fill="#3b82f6" radius={[0, 4, 4, 0]}>
+                                        {stats.waiterStats.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="h-full flex items-center justify-center text-gray-400 text-sm py-10">No hay datos hoy</div>
+                        )}
                     </div>
                 </div>
-            )}
+
+                {/* Top Items Pie Chart */}
+                <div>
+                    <p className="section-title">Top 5 productos (Hoy)</p>
+                    <div className="card p-4 min-h-[250px] flex items-center justify-center">
+                        {stats.topItems.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={250}>
+                                <PieChart>
+                                    <Pie
+                                        data={stats.topItems}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="count"
+                                        nameKey="name"
+                                    >
+                                        {stats.topItems.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <RechartsTooltip 
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Legend wrapperStyle={{ fontSize: '11px' }} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="h-full flex items-center justify-center text-gray-400 text-sm py-10">No hay datos hoy</div>
+                        )}
+                    </div>
+                </div>
+
+            </div>
 
             {/* Quick links */}
             <div>

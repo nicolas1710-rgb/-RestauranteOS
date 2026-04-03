@@ -144,6 +144,21 @@ export default function WaiterPage() {
                                             )}
                                         </button>
 
+                                        {/* Order Items snippet */}
+                                        {isReady && order && order.order_items?.length > 0 && (
+                                            <div className="w-full bg-amber-50 border border-amber-200 rounded-xl p-2 mt-1 mb-1">
+                                                <p className="text-[10px] font-bold text-amber-800 mb-1 uppercase tracking-wider text-center">Para entregar:</p>
+                                                <ul className="text-xs text-amber-950 space-y-1">
+                                                    {order.order_items.map((item: any) => (
+                                                        <li key={item.id} className="flex gap-1.5 items-start">
+                                                            <span className="font-bold bg-white px-1.5 py-0.5 rounded-md min-w-[1.5rem] text-center shadow-sm text-[10px]">{item.quantity}</span>
+                                                            <span className="leading-tight pt-0.5 break-words line-clamp-2">{item.menu_item?.name}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+
                                         {/* Deliver button — only when order is ready */}
                                         {isReady && order && (
                                             <button
