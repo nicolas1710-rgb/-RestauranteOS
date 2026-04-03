@@ -218,7 +218,7 @@ export default function AdminPage() {
                                 <BarChart data={stats.waiterStats} margin={{ top: 20, right: 0, left: -20, bottom: 0 }} layout="horizontal">
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
                                     <XAxis dataKey="name" type="category" tick={{fontSize: 12}} axisLine={false} tickLine={false} />
-                                    <YAxis type="number" tick={{fontSize: 12}} axisLine={false} tickLine={false} />
+                                    <YAxis type="number" tick={{fontSize: 12}} axisLine={false} tickLine={false} allowDecimals={false} />
                                     <RechartsTooltip 
                                         cursor={{fill: 'transparent'}}
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
@@ -245,7 +245,7 @@ export default function AdminPage() {
                             <ResponsiveContainer width="100%" height={250}>
                                 <BarChart data={stats.topItems} margin={{ top: 0, right: 30, left: 10, bottom: 0 }} layout="vertical">
                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
-                                    <XAxis type="number" hide />
+                                    <XAxis type="number" hide allowDecimals={false} />
                                     <YAxis 
                                         dataKey="name" 
                                         type="category" 
