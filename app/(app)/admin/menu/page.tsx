@@ -237,12 +237,12 @@ export default function AdminMenuPage() {
                                                         <span className="text-orange-500 text-xs">💰</span>
                                                     </label>
                                                     <div className="relative">
-                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                                                         <input
                                                             value={itemForm.price}
                                                             onChange={e => setItemForm(f => ({ ...f, price: e.target.value }))}
                                                             type="number"
-                                                            className="input text-sm h-11 pl-9"
+                                                            className="input text-sm h-11 pl-11"
                                                             placeholder="0.00"
                                                         />
                                                     </div>
