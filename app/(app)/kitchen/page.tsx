@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useOrders } from '@/lib/hooks/useOrders'
 import { getElapsedMinutes, formatElapsed } from '@/lib/utils'
-import { Flame, CheckCircle2, Clock, ChefHat, Info } from 'lucide-react'
+import { Flame, CheckCircle2, Clock, ChefHat, Info, LogOut, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { Order, OrderItem, MenuItem, Table } from '@/types/database'
 
@@ -26,7 +27,8 @@ const ticketStyles: Record<string, string> = {
 }
 
 export default function KitchenPage() {
-    const { profile } = useAuth()
+    const router = useRouter()
+    const { profile, signOut } = useAuth()
     const { orders: allOrders, loading, updateOrderStatus, updateItemStatus, deliverOrder } = useOrders(profile?.restaurant_id)
     const prevCountRef = useRef(0)
 
@@ -118,9 +120,25 @@ export default function KitchenPage() {
                         <span className="text-gray-500 text-sm">·</span>
                         <span className="text-gray-400 text-sm">{activeOrders.length} pedidos activos</span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-400 text-sm">
-                        <Clock className="w-4 h-4" />
-                        <span>{new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</span>
+                    <div className="flex items-center gap-4 text-gray-400 text-sm">
+                        <div className="flex items-center gap-2 hidden sm:flex">
+                            <Clock className="w-4 h-4" />
+                            <span>{new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <button
+                            onClick={() => router.push('/')}
+                            className="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors min-h-0"
+                            title="Volver"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={signOut}
+                            className="p-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors min-h-0"
+                            title="Cerrar sesión"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </button>
                     </div>
                 </div>
 

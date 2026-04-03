@@ -87,7 +87,7 @@ export default function WaiterMenuPage({ params }: Props) {
     )
 
     return (
-        <div className="flex flex-col h-[calc(100vh-56px)]">
+        <div className="flex flex-col" style={{ height: 'calc(100dvh - 56px - 64px)' }}>
             {/* Header */}
             <div className="page-header">
                 <button onClick={() => router.back()} className="p-1.5 rounded-xl hover:bg-gray-100 min-h-0">
