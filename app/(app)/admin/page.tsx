@@ -7,8 +7,9 @@ import { formatCurrency } from '@/lib/utils'
 import { TrendingUp, Users, ShoppingBag, Clock, ChefHat, UtensilsCrossed } from 'lucide-react'
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-    BarChart, Bar, PieChart, Pie, Cell, Legend
+    BarChart, Bar, PieChart, Pie, Cell, Legend, LabelList
 } from 'recharts'
+import Link from 'next/link'
 
 const COLORS = ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#f59e0b', '#06b6d4', '#6366f1']
 
@@ -226,6 +227,7 @@ export default function AdminPage() {
                                         {stats.waiterStats.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
+                                        <LabelList dataKey="ordenes" position="right" style={{ fontSize: '12px', fill: '#6b7280', fontWeight: 'bold' }} formatter={(val: number) => `${val} ventas`} />
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
@@ -246,11 +248,13 @@ export default function AdminPage() {
                                         data={stats.topItems}
                                         cx="50%"
                                         cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
+                                        innerRadius={40}
+                                        outerRadius={70}
                                         paddingAngle={5}
                                         dataKey="count"
                                         nameKey="name"
+                                        label={({ name, value }: any) => `${name.substring(0,10)} (${value})`}
+                                        labelLine={true}
                                     >
                                         {stats.topItems.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -280,14 +284,14 @@ export default function AdminPage() {
                         { href: '/admin/staff', label: 'Staff', emoji: '👤' },
                         { href: '/admin/orders', label: 'Historial', emoji: '📋' },
                     ].map(link => (
-                        <a
+                        <Link
                             key={link.href}
                             href={link.href}
                             className="card-hover p-4 flex items-center gap-3"
                         >
                             <span className="text-2xl">{link.emoji}</span>
                             <span className="font-semibold text-gray-700 text-sm">{link.label}</span>
-                        </a>
+                        </Link>
                     ))}
                 </div>
             </div>

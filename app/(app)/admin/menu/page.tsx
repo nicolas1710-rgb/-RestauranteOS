@@ -7,6 +7,7 @@ import { formatCurrency } from '@/lib/utils'
 import { Plus, Trash2, ToggleLeft, ToggleRight, ChevronDown, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { MenuCategory, MenuItem } from '@/types/database'
+import imageCompression from 'browser-image-compression'
 
 export default function AdminMenuPage() {
     const { profile } = useAuth()
@@ -68,21 +69,35 @@ export default function AdminMenuPage() {
         let imageUrl = null
 
         if (imageFile) {
-            const fileExt = imageFile.name.split('.').pop()
-            const fileName = `${Math.random().toString(36).substr(2, 9)}_${Date.now()}.${fileExt}`
-            const filePath = `${profile!.restaurant_id}/${fileName}`
+            try {
+                // Compress image before uploading
+                const options = {
+                    maxSizeMB: 0.5,
+                    maxWidthOrHeight: 1024,
+                    useWebWorker: true,
+                };
+                const compressedFile = await imageCompression(imageFile, options);
 
-            const { error: uploadError } = await supabase.storage
-                .from('menu-images')
-                .upload(filePath, imageFile)
+                const fileExt = imageFile.name.split('.').pop()
+                const fileName = `${Math.random().toString(36).substr(2, 9)}_${Date.now()}.${fileExt}`
+                const filePath = `${profile!.restaurant_id}/${fileName}`
 
-            if (uploadError) {
-                toast.error('Error al subir imagen. ¿Existe el bucket "menu-images"?')
-                return
+                const { error: uploadError } = await supabase.storage
+                    .from('menu-images')
+                    .upload(filePath, compressedFile)
+
+                if (uploadError) {
+                    toast.error('Error al subir imagen. ¿Existe el bucket "menu-images"?')
+                    return
+                }
+
+                const { data } = supabase.storage.from('menu-images').getPublicUrl(filePath)
+                imageUrl = data.publicUrl
+            } catch (error) {
+                console.error("Error compressing image:", error);
+                toast.error('Error al comprimir la imagen');
+                return;
             }
-
-            const { data } = supabase.storage.from('menu-images').getPublicUrl(filePath)
-            imageUrl = data.publicUrl
         }
 
         const { error } = await (supabase.from('menu_items') as any).insert({
