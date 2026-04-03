@@ -19,6 +19,7 @@ export default function AdminMenuPage() {
     const [catName, setCatName] = useState('')
     const [catIcon, setCatIcon] = useState('🍽️')
     const [itemForm, setItemForm] = useState({ name: '', description: '', price: '', image_url: '' })
+    const [imageFile, setImageFile] = useState<File | null>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => { if (profile?.restaurant_id) loadData() }, [profile?.restaurant_id])
@@ -63,13 +64,34 @@ export default function AdminMenuPage() {
 
     async function createItem(categoryId: string) {
         if (!itemForm.name.trim() || !itemForm.price) return
+        
+        let imageUrl = null
+
+        if (imageFile) {
+            const fileExt = imageFile.name.split('.').pop()
+            const fileName = `${Math.random().toString(36).substr(2, 9)}_${Date.now()}.${fileExt}`
+            const filePath = `${profile!.restaurant_id}/${fileName}`
+
+            const { error: uploadError } = await supabase.storage
+                .from('menu-images')
+                .upload(filePath, imageFile)
+
+            if (uploadError) {
+                toast.error('Error al subir imagen. ¿Existe el bucket "menu-images"?')
+                return
+            }
+
+            const { data } = supabase.storage.from('menu-images').getPublicUrl(filePath)
+            imageUrl = data.publicUrl
+        }
+
         const { error } = await (supabase.from('menu_items') as any).insert({
             restaurant_id: profile!.restaurant_id,
             category_id: categoryId,
             name: itemForm.name.trim(),
             description: itemForm.description || null,
             price: parseFloat(itemForm.price),
-            image_url: itemForm.image_url || null,
+            image_url: imageUrl,
             preparation_time: 0,
             available: true,
             display_order: items.filter(i => i.category_id === categoryId).length,
@@ -77,6 +99,7 @@ export default function AdminMenuPage() {
         if (error) { toast.error(error.message); return }
         toast.success('Item creado')
         setItemForm({ name: '', description: '', price: '', image_url: '' })
+        setImageFile(null)
         setShowItemForm(null)
         loadData()
     }
@@ -236,13 +259,15 @@ export default function AdminMenuPage() {
                                                         <span>Precio de Venta</span>
                                                         <span className="text-orange-500 text-xs">💰</span>
                                                     </label>
-                                                    <div className="relative">
-                                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                                    <div className="flex bg-white border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-orange-500/20 focus-within:border-orange-500 transition-all h-11">
+                                                        <div className="flex items-center justify-center px-4 bg-gray-50 border-r border-gray-200 text-gray-600 font-bold">
+                                                            $
+                                                        </div>
                                                         <input
                                                             value={itemForm.price}
                                                             onChange={e => setItemForm(f => ({ ...f, price: e.target.value }))}
-                                                            type="text"
-                                                            className="input text-sm h-11 pl-12"
+                                                            type="number"
+                                                            className="flex-1 w-full bg-transparent border-0 focus:ring-0 px-3 text-sm h-full outline-none"
                                                             placeholder="0.00"
                                                         />
                                                     </div>
@@ -251,14 +276,18 @@ export default function AdminMenuPage() {
 
                                                 <div className="space-y-1.5">
                                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1">
-                                                        <span>URL de la Imagen</span>
+                                                        <span>Imagen del Plato</span>
                                                         <span className="text-orange-500 text-xs">🖼️</span>
                                                     </label>
                                                     <input
-                                                        value={itemForm.image_url}
-                                                        onChange={e => setItemForm(f => ({ ...f, image_url: e.target.value }))}
-                                                        className="input text-sm h-11"
-                                                        placeholder="https://ejemplo.com/imagen.jpg (Opcional)"
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={e => {
+                                                            if (e.target.files && e.target.files[0]) {
+                                                                setImageFile(e.target.files[0])
+                                                            }
+                                                        }}
+                                                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100 transition-colors h-11 border border-gray-200 rounded-xl bg-white px-2 py-1 flex items-center"
                                                     />
                                                 </div>
                                             </div>
