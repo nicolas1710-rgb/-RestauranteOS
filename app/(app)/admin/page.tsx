@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { formatCurrency } from '@/lib/utils'
-import { TrendingUp, Users, ShoppingBag, Clock, ChefHat, UtensilsCrossed } from 'lucide-react'
+import { TrendingUp, Users, ShoppingBag, Clock, BarChart2 } from 'lucide-react'
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-    BarChart, Bar, PieChart, Pie, Cell, Legend, LabelList
+    BarChart, Bar, Cell, LabelList
 } from 'recharts'
 import Link from 'next/link'
+import { AdvancedStatsModal } from '@/components/admin/AdvancedStatsModal'
 
 const COLORS = ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#f59e0b', '#06b6d4', '#6366f1']
 
@@ -27,6 +28,7 @@ export default function AdminPage() {
         weeklySales: [] as { date: string; ventas: number }[]
     })
     const [loading, setLoading] = useState(true)
+    const [showAdvancedStats, setShowAdvancedStats] = useState(false)
 
     useEffect(() => {
         if (!profile?.restaurant_id) return
@@ -295,8 +297,28 @@ export default function AdminPage() {
                             <span className="font-semibold text-gray-700 text-sm">{link.label}</span>
                         </Link>
                     ))}
+                    {/* Estadísticas Avanzadas */}
+                    <button
+                        id="btn-advanced-stats"
+                        onClick={() => setShowAdvancedStats(true)}
+                        className="card-hover p-4 flex items-center gap-3 text-left w-full border-2 border-orange-100 bg-gradient-to-br from-orange-50 to-amber-50"
+                    >
+                        <span className="text-2xl">📊</span>
+                        <div>
+                            <span className="font-semibold text-orange-700 text-sm block">Estadísticas Avanzadas</span>
+                            <span className="text-xs text-orange-400">6 KPIs de alto impacto</span>
+                        </div>
+                    </button>
                 </div>
             </div>
+
+            {/* Advanced Stats Modal */}
+            {showAdvancedStats && profile?.restaurant_id && (
+                <AdvancedStatsModal
+                    restaurantId={profile.restaurant_id}
+                    onClose={() => setShowAdvancedStats(false)}
+                />
+            )}
         </div>
     )
 }
