@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, CalendarClock } from 'lucide-react'
 import toast from 'react-hot-toast'
-import type { Area, Table } from '@/types/database'
+import type { Area, Table, TableStatus } from '@/types/database'
+import { cn } from '@/lib/utils'
 
 export default function AdminTablesPage() {
     const { profile } = useAuth()
@@ -59,6 +60,21 @@ export default function AdminTablesPage() {
         if (!confirm('¿Eliminar esta mesa?')) return
         await supabase.from('tables').delete().eq('id', id)
         toast.success('Mesa eliminada'); load()
+    }
+
+    async function updateTableStatus(id: string, currentStatus: TableStatus) {
+        if (currentStatus === 'occupied') {
+            toast.error('No se puede reservar una mesa ocupada')
+            return
+        }
+        const newStatus = currentStatus === 'reserved' ? 'available' : 'reserved'
+        const { error } = await supabase.from('tables').update({ status: newStatus }).eq('id', id)
+        if (error) {
+            toast.error('Error al actualizar el estado')
+        } else {
+            toast.success(newStatus === 'reserved' ? 'Mesa marcada como Reservada' : 'Reserva cancelada')
+            load()
+        }
     }
 
     const STATUS_LABELS: Record<string, string> = {
@@ -172,13 +188,34 @@ export default function AdminTablesPage() {
                             {/* Table grid */}
                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                                 {areaTables.map(table => (
-                                    <div key={table.id} className="relative card p-3 text-center group">
-                                        <p className="text-2xl font-bold text-gray-800">{table.number}</p>
-                                        <p className="text-xs text-gray-400">{table.capacity} pers.</p>
-                                        <p className="text-xs mt-1">{STATUS_LABELS[table.status]}</p>
+                                    <div key={table.id} className="relative group">
+                                        <button
+                                            onClick={() => updateTableStatus(table.id, table.status)}
+                                            disabled={table.status === 'occupied'}
+                                            className={cn(
+                                                "w-full card p-3 text-center transition-all duration-200 active:scale-95",
+                                                table.status === 'reserved' ? "border-2 border-slate-300 bg-slate-50" : "hover:border-orange-200",
+                                                table.status === 'occupied' ? "opacity-90 cursor-default" : "cursor-pointer"
+                                            )}
+                                        >
+                                            <p className="text-2xl font-bold text-gray-800">{table.number}</p>
+                                            <p className="text-xs text-gray-400 font-medium mb-1">{table.capacity} pers.</p>
+                                            
+                                            <div className={cn(
+                                                "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full inline-flex items-center gap-1",
+                                                table.status === 'available' ? "bg-emerald-100 text-emerald-700" :
+                                                table.status === 'reserved' ? "bg-slate-200 text-slate-700" :
+                                                "bg-red-100 text-red-700 font-bold"
+                                            )}>
+                                                {table.status === 'reserved' && <CalendarClock className="w-3 h-3" />}
+                                                {STATUS_LABELS[table.status]}
+                                            </div>
+                                        </button>
+                                        
                                         <button
                                             onClick={() => deleteTable(table.id)}
-                                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-400 min-h-0 transition-opacity"
+                                            className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 p-1.5 bg-white shadow-md border border-gray-100 rounded-full text-gray-400 hover:text-red-500 min-h-0 transition-all z-10"
+                                            title="Eliminar mesa"
                                         >
                                             <Trash2 className="w-3 h-3" />
                                         </button>
