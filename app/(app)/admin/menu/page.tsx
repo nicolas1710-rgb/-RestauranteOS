@@ -23,6 +23,11 @@ export default function AdminMenuPage() {
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [loading, setLoading] = useState(true)
 
+    const formatPrice = (val: string) => {
+        const clean = val.replace(/\D/g, '')
+        return clean.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+    }
+
     useEffect(() => { if (profile?.restaurant_id) loadData() }, [profile?.restaurant_id])
 
     async function loadData() {
@@ -105,7 +110,7 @@ export default function AdminMenuPage() {
             category_id: categoryId,
             name: itemForm.name.trim(),
             description: itemForm.description || null,
-            price: parseFloat(itemForm.price),
+            price: parseFloat(itemForm.price.replace(/\./g, '')),
             image_url: imageUrl,
             preparation_time: 0,
             available: true,
@@ -284,8 +289,9 @@ export default function AdminMenuPage() {
                                                         </div>
                                                         <input
                                                             value={itemForm.price}
-                                                            onChange={e => setItemForm(f => ({ ...f, price: e.target.value }))}
-                                                            type="number"
+                                                            onChange={e => setItemForm(f => ({ ...f, price: formatPrice(e.target.value) }))}
+                                                            type="text"
+                                                            inputMode="numeric"
                                                             className="flex-1 w-full bg-transparent border-0 focus:ring-0 px-3 text-sm h-full outline-none"
                                                             placeholder="0.00"
                                                         />

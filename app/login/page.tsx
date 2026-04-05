@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { ChefHat, Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react'
+import Link from 'next/link'
 
 export default function LoginPage() {
     const { signIn } = useAuth()
@@ -79,6 +80,11 @@ export default function LoginPage() {
                                 >
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
+                            </div>
+                            <div className="flex justify-end pt-1">
+                                <Link href="/recover-password" className="text-xs font-semibold text-orange-600 hover:text-orange-700">
+                                    ¿Olvidaste tu contraseña?
+                                </Link>
                             </div>
                         </div>
                         <button
