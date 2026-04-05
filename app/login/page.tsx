@@ -82,9 +82,9 @@ export default function LoginPage() {
                                 </button>
                             </div>
                             <div className="flex justify-end pt-1">
-                                <Link href="/recover-password" className="text-xs font-semibold text-orange-600 hover:text-orange-700">
+                                <a href="/recover-password" className="text-xs font-semibold text-orange-600 hover:text-orange-700">
                                     ¿Olvidaste tu contraseña?
-                                </Link>
+                                </a>
                             </div>
                         </div>
                         <button
