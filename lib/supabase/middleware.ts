@@ -11,7 +11,7 @@ export async function updateSession(request: NextRequest) {
     if (isMock) {
         const mockUserId = request.cookies.get('mock_user_id')?.value
         const pathname = request.nextUrl.pathname
-        const publicPaths = ['/login', '/recover-password', '/update-password']
+        const publicPaths = ['/login', '/recover-password', '/update-password', '/api/auth/callback']
 
         if (publicPaths.some(p => pathname.startsWith(p))) {
             return supabaseResponse
@@ -56,7 +56,7 @@ export async function updateSession(request: NextRequest) {
     const pathname = request.nextUrl.pathname
 
     // Allow public paths
-    const publicPaths = ['/login', '/recover-password', '/update-password']
+    const publicPaths = ['/login', '/recover-password', '/update-password', '/api/auth/callback']
     if (publicPaths.some(p => pathname.startsWith(p))) {
         return supabaseResponse
     }
